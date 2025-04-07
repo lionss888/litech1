@@ -63,7 +63,8 @@
     "nodemailer": "latest",
     "@prisma/client": "latest",
     "bcryptjs": "latest",
-    "next-auth": "latest"
+    "next-auth": "latest",
+    "crypto": "latest"
   },
   "devDependencies": {
     "@types/node": "^22",

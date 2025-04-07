@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { Home, BarChart, PieChart, List, Target, Users } from "lucide-react"
+import { Home, BarChart, PieChart, List, Target, Users, User } from "lucide-react"
 
 interface MainNavProps {
   className?: string
@@ -43,6 +43,12 @@ export function MainNav({ className, userRole }: MainNavProps) {
       label: "Отчеты",
       active: pathname === "/reports",
       icon: <BarChart className="h-4 w-4 mr-2" />,
+    },
+    {
+      href: "/profile",
+      label: "Профиль",
+      active: pathname === "/profile",
+      icon: <User className="h-4 w-4 mr-2" />,
     },
   ]
 

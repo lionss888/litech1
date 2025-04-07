@@ -8,6 +8,8 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  // Для Vercel Postgres
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -24,6 +26,7 @@ model User {
   categories    Category[]
   budgets       Budget[]
   financialGoals FinancialGoal[]
+  apiConnections ApiConnection[]
 }
 
 enum Role {
@@ -43,6 +46,9 @@ model Transaction {
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  externalId  String?   // ID транзакции во внешней системе
+  apiConnectionId String? // ID подключения к API, через которое получена транзакция
+  apiConnection ApiConnection? @relation(fields: [apiConnectionId], references: [id])
 }
 
 enum TransactionType {
@@ -93,5 +99,25 @@ model FinancialGoal {
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+}
+
+// Новая модель для хранения подключений к API
+model ApiConnection {
+  id            String    @id @default(cuid())
+  name          String    // Название подключения (например, "Мой Сбербанк")
+  provider      String    // Провайдер API (например, "sberbank", "tinkoff", "custom")
+  apiKey        String?   // API ключ (зашифрованный)
+  apiSecret     String?   // API секрет (зашифрованный)
+  accessToken   String?   // Токен доступа (зашифрованный)
+  refreshToken  String?   // Токен обновления (зашифрованный)
+  tokenExpiry   DateTime? // Срок действия токена
+  baseUrl       String?   // Базовый URL для кастомных API
+  isActive      Boolean   @default(true)
+  lastSyncAt    DateTime? // Время последней синхронизации
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  transactions  Transaction[] // Транзакции, полученные через это подключение
 }
 
