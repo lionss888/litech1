@@ -1,437 +1,356 @@
 "use client"
 
-import type React from "react"
-
-import { useState, useEffect } from "react"
-import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { useAuth } from "./auth-context"
-import { Mail, LogOut } from "lucide-react"
 import Link from "next/link"
+import { ArrowRight, BarChart3, PieChart, Shield, Clock, ChevronRight } from "lucide-react"
+import { useEffect, useState, useRef } from "react"
 
-// Добавим импорты для новых иконок
-import { BarChart, List, Target } from "lucide-react"
-import { useRouter } from "next/navigation"
+export default function HomePage() {
+  const [scrollY, setScrollY] = useState(0)
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
+  const heroRef = useRef(null)
 
-export default function OnlineAccountingDemo() {
-  const { user, isLoading } = useAuth()
-
-  // Показываем состояние загрузки при проверке аутентификации
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin h-8 w-8 border-4 border-blue-500 rounded-full border-t-transparent"></div>
-      </div>
-    )
-  }
-
-  // Если не аутентифицирован, показываем страницу входа
-  if (!user) {
-    return <LoginPage />
-  }
-
-  // Если аутентифицирован, показываем панель управления
-  return <Dashboard user={user} />
-}
-
-function LoginPage() {
-  const { login } = useAuth()
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [error, setError] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [isClient, setIsClient] = useState(false)
-
-  // Исправляем проблемы с гидратацией
+  // Эффект для отслеживания скролла и движения мыши
   useEffect(() => {
-    setIsClient(true)
-  }, [])
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
-    setIsLoading(true)
-
-    try {
-      const result = await login(email, password)
-      if (!result.success) {
-        setError(result.error || "Неверный email или пароль")
-      }
-    } catch (err) {
-      setError("Произошла ошибка при входе")
-      console.error(err)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  // Обработка клика по кнопке социальной авторизации
-  const handleSocialLogin = (provider: string) => {
-    alert(`${provider} авторизация будет добавлена позже`)
-  }
-
-  if (!isClient) {
-    return null // Предотвращаем ошибки гидратации
-  }
-
-  return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <header className="bg-[#2c3e50] text-white py-4">
-        <div className="container mx-auto px-4">
-          <div className="text-xl font-bold">ФинУчет</div>
-        </div>
-      </header>
-
-      <main className="flex-1 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md p-6">
-          <h1 className="text-2xl font-bold text-center mb-6">Вход в систему</h1>
-
-          {error && <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">{error}</div>}
-
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Email</label>
-              <input
-                type="email"
-                className="w-full p-2 border rounded-md"
-                placeholder="example@mail.ru"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">Пароль</label>
-              <input
-                type="password"
-                className="w-full p-2 border rounded-md"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-
-            <Button type="submit" className="w-full bg-[#3498db] hover:bg-[#2980b9]" disabled={isLoading}>
-              {isLoading ? "Вход..." : "Войти"}
-            </Button>
-          </form>
-
-          <div className="mt-4 text-center text-sm">
-            Нет аккаунта?{" "}
-            <Link href="/register" className="text-blue-600 hover:underline">
-              Зарегистрироваться
-            </Link>
-          </div>
-
-          <div className="mt-6">
-            <p className="text-center text-sm text-gray-500 mb-4">Или войдите через:</p>
-            <div className="grid grid-cols-2 gap-3">
-              <Button
-                variant="outline"
-                className="flex items-center justify-center gap-2"
-                onClick={() => handleSocialLogin("Google")}
-              >
-                <Mail className="w-5 h-5" />
-                Google
-              </Button>
-              <Button
-                variant="outline"
-                className="flex items-center justify-center gap-2"
-                onClick={() => handleSocialLogin("Яндекс")}
-              >
-                <Mail className="w-5 h-5" />
-                Яндекс
-              </Button>
-              <Button
-                variant="outline"
-                className="flex items-center justify-center gap-2"
-                onClick={() => handleSocialLogin("ВТБ ID")}
-              >
-                <Mail className="w-5 h-5" />
-                ВТБ ID
-              </Button>
-              <Button
-                variant="outline"
-                className="flex items-center justify-center gap-2"
-                onClick={() => handleSocialLogin("Apple")}
-              >
-                <Mail className="w-5 h-5" />
-                Apple
-              </Button>
-            </div>
-          </div>
-        </Card>
-      </main>
-
-      <footer className="bg-[#2c3e50] text-white py-3 text-center">
-        <div className="container mx-auto px-4">&copy; 2023 ФинУчет. Все права защищены.</div>
-      </footer>
-    </div>
-  )
-}
-
-function Dashboard({ user }: { user: any }) {
-  const { logout } = useAuth()
-  const router = useRouter()
-  const [statistics, setStatistics] = useState<any>(null)
-
-  useEffect(() => {
-    // Здесь будет логика для получения статистики
-    const fetchStatistics = async () => {
-      try {
-        // Заглушка для статистики
-        const mockStatistics = {
-          balance: {
-            total: 120500,
-            income: 45000,
-            expense: 32500,
-          },
-          budgets: [
-            { category: "Продукты", spent: 8500, limit: 15000 },
-            { category: "Развлечения", spent: 3200, limit: 10000 },
-            { category: "Транспорт", spent: 4800, limit: 5000 },
-          ],
-        }
-        setStatistics(mockStatistics)
-      } catch (error) {
-        console.error("Failed to fetch statistics", error)
-      }
+    const handleScroll = () => {
+      setScrollY(window.scrollY)
     }
 
-    fetchStatistics()
+    const handleMouseMove = (e) => {
+      setMousePosition({ x: e.clientX, y: e.clientY })
+    }
+
+    window.addEventListener("scroll", handleScroll)
+    window.addEventListener("mousemove", handleMouseMove)
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll)
+      window.removeEventListener("mousemove", handleMouseMove)
+    }
   }, [])
 
-  const formatAmount = (amount: number) => {
-    return amount.toLocaleString("ru-RU", {
-      style: "currency",
-      currency: "RUB",
-      minimumFractionDigits: 0,
-    })
+  // Функция для расчета смещения элемента в зависимости от положения мыши
+  const calculateMouseOffset = (factor = 0.02) => {
+    if (typeof window === "undefined") return { x: 0, y: 0 }
+
+    const centerX = window.innerWidth / 2
+    const centerY = window.innerHeight / 2
+
+    const offsetX = (mousePosition.x - centerX) * factor
+    const offsetY = (mousePosition.y - centerY) * factor
+
+    return { x: offsetX, y: offsetY }
   }
 
-  const calculateChange = (income: number, expense: number) => {
-    if (expense === 0) return 100 // Избегаем деления на ноль
-    return ((income - expense) / expense) * 100
-  }
+  const mouseOffset = calculateMouseOffset()
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <header className="bg-[#2c3e50] text-white py-4">
-        <div className="container mx-auto px-4 flex justify-between items-center">
-          <div className="text-xl font-bold">ФинУчет</div>
-          {/* В разделе навигации добавим ссылки на новые страницы */}
-          <nav className="hidden md:flex space-x-6">
-            <Link href="/" className="text-white hover:text-gray-300">
-              Дашборд
+    <div className="min-h-screen apple-bg flex flex-col">
+      {/* Навигация в стиле Apple */}
+      <header className="glass-effect sticky top-0 z-50">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+          <div className="text-xl font-semibold gradient-text">ФинУчет</div>
+          <nav className="flex space-x-4 items-center">
+            <Link
+              href="/demo"
+              className="px-4 py-2 rounded-full text-[#1d1d1f] hover:bg-black/5 transition-colors text-sm"
+            >
+              Демо
             </Link>
-            <Link href="/transactions" className="text-white hover:text-gray-300">
-              Транзакции
+            <Link
+              href="/login"
+              className="px-4 py-2 rounded-full text-[#1d1d1f] hover:bg-black/5 transition-colors text-sm"
+            >
+              Войти
             </Link>
-            <Link href="/categories" className="text-white hover:text-gray-300">
-              Категории
+            <Link href="/login?register=true" className="apple-button text-sm py-2 px-4">
+              Регистрация
             </Link>
-            <Link href="/budget" className="text-white hover:text-gray-300">
-              Бюджет
-            </Link>
-            <Link href="/reports" className="text-white hover:text-gray-300">
-              Отчеты
-            </Link>
-            {user.role === "ADMIN" && (
-              <Link href="/admin/users" className="text-white hover:text-gray-300">
-                Пользователи
-              </Link>
-            )}
           </nav>
-          <div className="flex items-center gap-2">
-            {user.image ? (
-              <img src={user.image || "/placeholder.svg"} alt={user.name} className="w-8 h-8 rounded-full" />
-            ) : (
-              <div className="w-8 h-8 bg-[#3498db] rounded-full flex items-center justify-center text-white">
-                {user?.name ? user.name.charAt(0) : "У"}
-              </div>
-            )}
-            <span className="hidden md:inline">{user?.name || "Пользователь"}</span>
-            <Button variant="ghost" size="icon" className="text-white" onClick={logout}>
-              <LogOut className="w-5 h-5" />
-            </Button>
-          </div>
         </div>
       </header>
 
-      <main className="flex-1 py-6">
-        <div className="container mx-auto px-4">
-          <h1 className="text-2xl font-bold mb-6">Панель управления</h1>
+      {/* Главный баннер */}
+      <section className="py-20 md:py-32 relative overflow-hidden" ref={heroRef}>
+        {/* Абстрактные элементы фона */}
+        <div
+          className="abstract-blob bg-blue-400/30 w-80 h-80 top-0 right-0 floating"
+          style={{ transform: `translate(${mouseOffset.x * 0.5}px, ${mouseOffset.y * 0.5}px)` }}
+        ></div>
+        <div
+          className="abstract-blob bg-purple-400/30 w-72 h-72 bottom-0 left-0 floating-delay"
+          style={{ transform: `translate(${-mouseOffset.x * 0.3}px, ${-mouseOffset.y * 0.3}px)` }}
+        ></div>
+        <div className="abstract-circle w-[500px] h-[500px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rotate-slow"></div>
+        <div className="abstract-circle w-[700px] h-[700px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rotate-reverse"></div>
+        <div className="abstract-dots w-full h-full opacity-50"></div>
 
-          {/* В разделе с карточками добавим ссылки на новые функции */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <Card className="p-4 text-center">
-              <h3 className="text-lg font-medium mb-2">Баланс</h3>
-              <div className="text-2xl font-bold">{statistics ? formatAmount(statistics.balance.total) : "0 ₽"}</div>
-              <div className="text-green-500 text-sm">
-                {statistics && statistics.balance.income > 0
-                  ? `+${calculateChange(statistics.balance.income, statistics.balance.expense).toFixed(1)}% за месяц`
-                  : "0% за месяц"}
-              </div>
-              <Button variant="outline" size="sm" className="mt-2" onClick={() => router.push("/reports")}>
-                <BarChart className="h-4 w-4 mr-2" />
-                Подробнее
-              </Button>
-            </Card>
-
-            <Card className="p-4 text-center">
-              <h3 className="text-lg font-medium mb-2">Доходы (месяц)</h3>
-              <div className="text-2xl font-bold">{statistics ? formatAmount(statistics.balance.income) : "0 ₽"}</div>
-              <div className="text-green-500 text-sm">
-                {statistics && statistics.balance.income > 0 ? "+8.3% к прошлому месяцу" : "0% к прошлому месяцу"}
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-2"
-                onClick={() => router.push("/transactions?type=income")}
+        <div className="max-w-6xl mx-auto px-6 relative z-10">
+          <div className="max-w-3xl mx-auto text-center">
+            <h1 className="text-4xl md:text-6xl font-bold mb-6 apple-heading leading-tight tracking-tight">
+              Управляйте финансами
+              <br />
+              <span className="gradient-text">просто и эффективно</span>
+            </h1>
+            <p className="text-lg md:text-xl mb-10 text-[#86868b] max-w-2xl mx-auto">
+              ФинУчет — современный инструмент для отслеживания доходов и расходов, который поможет вам достичь
+              финансовой свободы
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link
+                href="/login?register=true"
+                className="apple-button text-base py-3 px-6 flex items-center justify-center glow"
               >
-                <List className="h-4 w-4 mr-2" />
-                Все доходы
-              </Button>
-            </Card>
-
-            <Card className="p-4 text-center">
-              <h3 className="text-lg font-medium mb-2">Расходы (месяц)</h3>
-              <div className="text-2xl font-bold">{statistics ? formatAmount(statistics.balance.expense) : "0 ₽"}</div>
-              <div className="text-green-500 text-sm">
-                {statistics && statistics.balance.expense > 0 ? "-5.2% к прошлому месяцу" : "0% к прошлому месяцу"}
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-2"
-                onClick={() => router.push("/transactions?type=expense")}
-              >
-                <List className="h-4 w-4 mr-2" />
-                Все расходы
-              </Button>
-            </Card>
+                Начать бесплатно
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Link>
+              <Link href="/demo" className="apple-button-secondary text-base py-3 px-6">
+                Попробовать демо
+              </Link>
+            </div>
           </div>
 
-          {/* Добавим новую карточку для бюджетов */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-            <Card className="p-4 col-span-2">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium">Движение средств</h3>
-                <Link href="/reports">
-                  <Button variant="outline" size="sm">
-                    <BarChart className="h-4 w-4 mr-2" />
-                    Подробнее
-                  </Button>
-                </Link>
-              </div>
-              <div className="h-64 bg-gray-100 rounded flex items-center justify-center">
-                {statistics ? (
-                  <div className="w-full h-full p-4">
-                    <div className="text-center text-gray-500">График движения средств</div>
-                  </div>
-                ) : (
-                  <div className="text-gray-500">Нет данных для отображения</div>
-                )}
-              </div>
-            </Card>
+          {/* Демонстрационное изображение */}
+          <div className="mt-16 max-w-4xl mx-auto">
+            <div className="apple-card p-1 md:p-2 shadow-xl gradient-border">
+              <div className="relative aspect-[16/9] rounded-xl overflow-hidden">
+                {/* Абстрактное изображение дашборда */}
+                <img
+                  src="/placeholder.svg?height=900&width=1600"
+                  alt="Интерфейс ФинУчет"
+                  className="w-full h-full object-cover"
+                />
 
-            <Card className="p-4">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium">Бюджеты</h3>
-                <Link href="/budget">
-                  <Button variant="outline" size="sm">
-                    <Target className="h-4 w-4 mr-2" />
-                    Подробнее
-                  </Button>
-                </Link>
+                {/* Наложение градиента для эффекта */}
+                <div className="absolute inset-0 bg-gradient-to-tr from-blue-500/5 to-purple-500/5"></div>
+
+                {/* Плавающие элементы на изображении */}
+                <div className="absolute top-1/4 right-1/4 w-16 h-16 bg-blue-500/10 rounded-full blur-xl floating"></div>
+                <div className="absolute bottom-1/3 left-1/3 w-12 h-12 bg-purple-500/10 rounded-full blur-xl floating-delay"></div>
               </div>
-              <div className="space-y-4">
-                <div className="p-3 border rounded-md">
-                  <div className="flex justify-between mb-1">
-                    <span className="font-medium">Продукты</span>
-                    <span className="text-sm">8 500 ₽ / 15 000 ₽</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2.5">
-                    <div className="bg-green-600 h-2.5 rounded-full" style={{ width: "57%" }}></div>
-                  </div>
-                </div>
-                <div className="p-3 border rounded-md">
-                  <div className="flex justify-between mb-1">
-                    <span className="font-medium">Развлечения</span>
-                    <span className="text-sm">3 200 ₽ / 10 000 ₽</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2.5">
-                    <div className="bg-green-600 h-2.5 rounded-full" style={{ width: "32%" }}></div>
-                  </div>
-                </div>
-                <div className="p-3 border rounded-md">
-                  <div className="flex justify-between mb-1">
-                    <span className="font-medium">Транспорт</span>
-                    <span className="text-sm">4 800 ₽ / 5 000 ₽</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2.5">
-                    <div className="bg-yellow-500 h-2.5 rounded-full" style={{ width: "96%" }}></div>
-                  </div>
-                </div>
-              </div>
-            </Card>
+            </div>
           </div>
-
-          <Card className="p-4">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium">Последние операции</h3>
-              <Button variant="outline" size="sm">
-                Все операции
-              </Button>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center p-3 border-b">
-                <div className="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center mr-4">
-                  ↓
-                </div>
-                <div className="flex-1">
-                  <div className="font-medium">Поступление от клиента</div>
-                  <div className="text-sm text-gray-500">Доходы</div>
-                </div>
-                <div className="text-sm text-gray-500 mx-4">15.04.2023</div>
-                <div className="text-green-600 font-medium">+15 000 ₽</div>
-              </div>
-
-              <div className="flex items-center p-3 border-b">
-                <div className="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center mr-4">
-                  ↑
-                </div>
-                <div className="flex-1">
-                  <div className="font-medium">Оплата аренды</div>
-                  <div className="text-sm text-gray-500">Расходы</div>
-                </div>
-                <div className="text-sm text-gray-500 mx-4">12.04.2023</div>
-                <div className="text-red-600 font-medium">-8 500 ₽</div>
-              </div>
-
-              <div className="flex items-center p-3">
-                <div className="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center mr-4">
-                  ↓
-                </div>
-                <div className="flex-1">
-                  <div className="font-medium">Оплата по договору</div>
-                  <div className="text-sm text-gray-500">Доходы</div>
-                </div>
-                <div className="text-sm text-gray-500 mx-4">10.04.2023</div>
-                <div className="text-green-600 font-medium">+12 000 ₽</div>
-              </div>
-            </div>
-          </Card>
         </div>
-      </main>
+      </section>
 
-      <footer className="bg-[#2c3e50] text-white py-3 text-center">
-        <div className="container mx-auto px-4">&copy; 2023 ФинУчет. Все права защищены.</div>
+      {/* Преимущества */}
+      <section className="py-20 bg-[#f5f5f7] relative overflow-hidden">
+        {/* Абстрактные элементы фона */}
+        <div className="abstract-line w-full top-0 opacity-70"></div>
+        <div className="abstract-line w-full bottom-0 opacity-70"></div>
+        <div className="abstract-dots w-full h-full opacity-30"></div>
+
+        <div className="max-w-6xl mx-auto px-6 relative z-10">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-semibold mb-4 apple-heading">Почему ФинУчет?</h2>
+            <p className="text-[#86868b] max-w-2xl mx-auto">
+              Мы создали приложение, которое сочетает в себе мощную аналитику и современный дизайн
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="apple-card p-8 flex flex-col items-center text-center apple-card-hover gradient-border">
+              <div className="w-16 h-16 rounded-full bg-[#0071e3]/10 flex items-center justify-center mb-6 glow">
+                <BarChart3 className="h-8 w-8 text-[#0071e3]" />
+              </div>
+              <h3 className="text-xl font-semibold mb-3 apple-heading">Простой анализ</h3>
+              <p className="text-[#86868b]">
+                Интерактивные графики и диаграммы помогут вам визуализировать ваши финансовые потоки
+              </p>
+            </div>
+
+            <div className="apple-card p-8 flex flex-col items-center text-center apple-card-hover gradient-border">
+              <div className="w-16 h-16 rounded-full bg-[#0071e3]/10 flex items-center justify-center mb-6 glow">
+                <PieChart className="h-8 w-8 text-[#0071e3]" />
+              </div>
+              <h3 className="text-xl font-semibold mb-3 apple-heading">Умная категоризация</h3>
+              <p className="text-[#86868b]">
+                Автоматическое распределение расходов по категориям с возможностью персонализации
+              </p>
+            </div>
+
+            <div className="apple-card p-8 flex flex-col items-center text-center apple-card-hover gradient-border">
+              <div className="w-16 h-16 rounded-full bg-[#0071e3]/10 flex items-center justify-center mb-6 glow">
+                <Shield className="h-8 w-8 text-[#0071e3]" />
+              </div>
+              <h3 className="text-xl font-semibold mb-3 apple-heading">Безопасность данных</h3>
+              <p className="text-[#86868b]">Ваши финансовые данные надежно защищены и доступны только вам</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Как это работает */}
+      <section className="py-20 relative overflow-hidden">
+        {/* Абстрактные элементы фона */}
+        <div className="abstract-circle w-[800px] h-[800px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rotate-slow opacity-30"></div>
+        <div
+          className="abstract-blob bg-blue-400/5 w-56 h-56 top-1/4 right-1/4 floating-slow"
+          style={{ transform: `translate(${mouseOffset.x * 0.2}px, ${mouseOffset.y * 0.2}px)` }}
+        ></div>
+
+        <div className="max-w-6xl mx-auto px-6 relative z-10">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-semibold mb-4 apple-heading">Как это работает</h2>
+            <p className="text-[#86868b] max-w-2xl mx-auto">Всего три простых шага для начала работы с ФинУчет</p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-12 h-12 rounded-full bg-[#0071e3] text-white flex items-center justify-center mb-6 text-xl font-semibold glow">
+                1
+              </div>
+              <h3 className="text-xl font-semibold mb-3 apple-heading">Регистрация</h3>
+              <p className="text-[#86868b]">Создайте бесплатный аккаунт за несколько секунд</p>
+            </div>
+
+            <div className="flex flex-col items-center text-center">
+              <div className="w-12 h-12 rounded-full bg-[#0071e3] text-white flex items-center justify-center mb-6 text-xl font-semibold glow">
+                2
+              </div>
+              <h3 className="text-xl font-semibold mb-3 apple-heading">Загрузка данных</h3>
+              <p className="text-[#86868b]">Загрузите CSV-файл с вашими финансовыми данными</p>
+            </div>
+
+            <div className="flex flex-col items-center text-center">
+              <div className="w-12 h-12 rounded-full bg-[#0071e3] text-white flex items-center justify-center mb-6 text-xl font-semibold glow">
+                3
+              </div>
+              <h3 className="text-xl font-semibold mb-3 apple-heading">Анализ</h3>
+              <p className="text-[#86868b]">Получите подробную аналитику и визуализацию ваших финансов</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Функциональность */}
+      <section className="py-20 bg-[#f5f5f7] relative overflow-hidden">
+        {/* Абстрактные элементы фона */}
+        <div className="abstract-dots w-full h-full opacity-30"></div>
+        <div
+          className="abstract-blob bg-purple-400/5 w-64 h-64 bottom-1/4 left-1/4 floating"
+          style={{ transform: `translate(${-mouseOffset.x * 0.2}px, ${-mouseOffset.y * 0.2}px)` }}
+        ></div>
+
+        <div className="max-w-6xl mx-auto px-6 relative z-10">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div>
+              <h2 className="text-3xl font-semibold mb-6 apple-heading">Основные функции</h2>
+              <p className="text-[#86868b] mb-8">Всё, что нужно для эффективного управления личными финансами</p>
+
+              <div className="space-y-6">
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-full bg-[#0071e3]/10 flex items-center justify-center shrink-0 mt-1 glow">
+                    <BarChart3 className="h-5 w-5 text-[#0071e3]" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2 apple-heading">Финансовая аналитика</h3>
+                    <p className="text-[#86868b]">Подробные отчеты и графики для анализа ваших доходов и расходов</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-full bg-[#0071e3]/10 flex items-center justify-center shrink-0 mt-1 glow">
+                    <PieChart className="h-5 w-5 text-[#0071e3]" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2 apple-heading">Категоризация расходов</h3>
+                    <p className="text-[#86868b]">
+                      Автоматическое распределение расходов по категориям для лучшего понимания
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-full bg-[#0071e3]/10 flex items-center justify-center shrink-0 mt-1 glow">
+                    <Clock className="h-5 w-5 text-[#0071e3]" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2 apple-heading">Экономия времени</h3>
+                    <p className="text-[#86868b]">
+                      Загрузите CSV-файл и получите готовую аналитику за считанные секунды
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-8">
+                <Link
+                  href="/demo"
+                  className="text-[#0071e3] hover:text-[#42a6f5] transition-colors flex items-center text-sm font-medium"
+                >
+                  Узнать больше о функциях
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Link>
+              </div>
+            </div>
+
+            <div className="apple-card p-1 md:p-2 shadow-xl gradient-border">
+              <div className="relative aspect-square rounded-xl overflow-hidden">
+                {/* Абстрактное изображение функций */}
+                <img
+                  src="/placeholder.svg?height=800&width=800"
+                  alt="Функции ФинУчет"
+                  className="w-full h-full object-cover"
+                />
+
+                {/* Наложение градиента для эффекта */}
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5"></div>
+
+                {/* Плавающие элементы на изображении */}
+                <div className="absolute top-1/3 right-1/3 w-20 h-20 bg-blue-500/10 rounded-full blur-xl floating"></div>
+                <div className="absolute bottom-1/4 left-1/4 w-16 h-16 bg-purple-500/10 rounded-full blur-xl floating-delay"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Призыв к действию */}
+      <section className="py-20 relative overflow-hidden">
+        {/* Абстрактные элементы фона */}
+        <div className="abstract-circle w-[600px] h-[600px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rotate-slow opacity-30"></div>
+        <div
+          className="abstract-blob bg-blue-400/10 w-80 h-80 top-1/3 right-1/3 floating-slow"
+          style={{ transform: `translate(${mouseOffset.x * 0.1}px, ${mouseOffset.y * 0.1}px)` }}
+        ></div>
+        <div
+          className="abstract-blob bg-purple-400/10 w-80 h-80 bottom-1/3 left-1/3 floating-delay"
+          style={{ transform: `translate(${-mouseOffset.x * 0.1}px, ${-mouseOffset.y * 0.1}px)` }}
+        ></div>
+
+        <div className="max-w-6xl mx-auto px-6 relative z-10">
+          <div className="apple-card p-12 text-center gradient-border glass-effect">
+            <h2 className="text-3xl font-semibold mb-6 apple-heading">Готовы начать контролировать свои финансы?</h2>
+            <p className="text-lg text-[#86868b] mb-8 max-w-2xl mx-auto">
+              Присоединяйтесь к тысячам пользователей, которые уже оптимизировали свои финансы с помощью ФинУчет
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link
+                href="/login?register=true"
+                className="apple-button text-base py-3 px-6 flex items-center justify-center glow"
+              >
+                Начать бесплатно
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Link>
+              <Link href="/demo" className="apple-button-secondary text-base py-3 px-6">
+                Попробовать демо
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Подвал */}
+      <footer className="py-12 bg-[#f5f5f7] relative">
+        <div className="abstract-line w-full top-0 opacity-70"></div>
+
+        <div className="max-w-6xl mx-auto px-6 relative z-10">
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <div className="text-xl font-semibold gradient-text mb-6 md:mb-0">ФинУчет</div>
+            <div className="text-[#86868b] text-sm">&copy; {new Date().getFullYear()} ФинУчет. Все права защищены.</div>
+          </div>
+        </div>
       </footer>
     </div>
   )
 }
-
